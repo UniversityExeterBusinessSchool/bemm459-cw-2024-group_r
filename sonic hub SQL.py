@@ -204,47 +204,50 @@ for _ in range(70):
                    round(random.uniform(1, 100) * 100000, 2)) # Revenue in lakhs
 cnxn.commit()
 print("Sample data for all tables inserted successfully.")
-# Check if date_of_birth column exists and add it if it doesn't
-try:
-    cursor.execute("""
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
-                   WHERE TABLE_NAME = 'Clients' AND COLUMN_NAME = 'date_of_birth')
-    BEGIN
-        ALTER TABLE Clients ADD date_of_birth DATE
-    END
-    """)
-    cnxn.commit()
-    print("Checked for date_of_birth column and added to Clients table if it did not exist.")
-except pyodbc.Error as e:
-    print("Error checking or adding date_of_birth column:", e)
 
-# Populate the date_of_birth column with random dates for every record if not already populated
+
+
+#2. Add the 71st row to the MusicTrackCatalogue table
+# Note: Adjust the values for genre, mood, tempo, duration, and composer_id as per your requirements
+try:
+    cursor.execute("SET IDENTITY_INSERT MusicTrackCatalogue ON")
+    cursor.execute("""
+    INSERT INTO MusicTrackCatalogue (track_id, genre, mood, tempo, duration, composer_id) 
+    VALUES (71, 'Pop', 'Happy', 'Fast', 200, 1)  -- Example values
+    """)
+    cursor.execute("SET IDENTITY_INSERT MusicTrackCatalogue OFF")
+    cnxn.commit()
+    print("71st row added to MusicTrackCatalogue table successfully.")
+except pyodbc.Error as e:
+    print("Error adding 71st row to MusicTrackCatalogue:", e)
+
+# 3. Update an email address for a specific client_id in the Clients table
+# Replace 'newemail@example.com' and '1' with the actual email and client_id you wish to update
 try:
     cursor.execute("""
     UPDATE Clients 
-    SET date_of_birth = DATEADD(year, -(ABS(CHECKSUM(NEWID())) % 50), GETDATE())
-    WHERE date_of_birth IS NULL
+    SET email = 'newemail@example.com' 
+    WHERE client_id = 1
     """)
     cnxn.commit()
-    print("Populated date_of_birth column with random dates for all records in Clients table where date_of_birth was NULL.")
+    print("Email address updated successfully for client_id 1.")
 except pyodbc.Error as e:
-    print("Error populating date_of_birth:", e)
+    print("Error updating email address:", e)
+    
+    # Specify the client_id you want to delete
+client_id_to_delete = 1  # Change this to the client_id you want to delete
 
-
-
-# Delete commands
-def delete_data_by_id(table_name, id_column, id_value):
-    sql = f"DELETE FROM {table_name} WHERE {id_column} = ?"
-    cursor.execute(sql, id_value)
+# Perform the deletion
+try:
+    cursor.execute("DELETE FROM Clients WHERE client_id = ?", client_id_to_delete)
     cnxn.commit()
-    print(f"Data with {id_column} = {id_value} deleted successfully from {table_name}.")
+    print(f"Client with client_id {client_id_to_delete} deleted successfully.")
+except pyodbc.Error as e:
+    print("Error deleting client:", e)
 
-
-table = 'Clients'
-data_id = 2666
-delete_data_by_id(table, 'client_id', data_id)
-print(f"Deleted data from {table} of {data_id}")
-
+# Close the cursor and connection
+cursor.close()
+cnxn.close()
 
 
 
